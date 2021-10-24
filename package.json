@@ -1,0 +1,10 @@
+{
+  "name": "encoding-user-additional-data-poc",
+  "version": "1.0.0",
+  "description": "A simple BFF PoC for encoding and decodingand authorization user with additional datas except authorization token",
+  "main": "index.js",
+  "repository": "http://github.com/emredoganm/encoding-user-additional-data-poc",
+  "author": "Emre Dogan<emredoganm@live.com>",
+  "license": "MIT",
+  "private": false
+}
