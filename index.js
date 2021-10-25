@@ -1,48 +1,61 @@
 require("dotenv").config();
+
 const express = require("express");
 const morgan = require("morgan");
 const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+
 const { generateUser, generateCustomData } = require("./utils");
-const { checkAuthentication, checkAuthorization } = require("./token");
-
+const { needsToBeAuthenticated, needsToBeVerified, needsToBeVIP } = require("./middlewares");
 const {
-  PORT,
-  API_PORT,
-  CUSTOM_TOKEN_KEY,
-  CUSTOM_TOKEN_HEADER,
-  AUTHORIZATION_TOKEN_KEY,
-  AUTHORIZATION_TOKEN_HEADER,
-} = process.env;
+  AuthorizationCookieName,
+  AuthenticationCookieName,
+  AuthenticationTokenExpireTime,
+  AuthorizationTokenExpireTime,
+} = require("./constants");
 
+const { PORT, API_PORT, CUSTOM_TOKEN_KEY, AUTHORIZATION_TOKEN_KEY } = process.env;
 const port = PORT || API_PORT;
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(morgan("combined"));
 
 app.get("/", (_request, response) => {
-  response.json({ message: "Hello World!", data: generateUser() });
+  response.json({ message: "Hello World!" });
 });
 
-app.post("/login", (request, response) => {
-  const token = jwt.sign(request.body, AUTHORIZATION_TOKEN_KEY, { expiresIn: "1m" });
-  response.json({ token });
+app.post("/login", (_request, response) => {
+  const data = generateUser();
+  const token = jwt.sign(data, AUTHORIZATION_TOKEN_KEY, {
+    expiresIn: AuthenticationTokenExpireTime,
+  });
+
+  response
+    .cookie(AuthenticationCookieName, token, { httpOnly: true, domain: "localhost" })
+    .json({ token, data });
 });
 
-app.all("/whoami", (request, response) => {
-  const { success, ...rest } = checkAuthentication(request.headers[AUTHORIZATION_TOKEN_HEADER]);
-  response.status(success ? 200 : 401).json({ success, ...rest });
+app.all("/whoami", [needsToBeAuthenticated], (request, response) => {
+  response.json({ user: request.user });
 });
 
 app.post("/authorize", (request, response) => {
   const payload = generateCustomData({ ...request.body });
-  const token = jwt.sign(payload, CUSTOM_TOKEN_KEY, { expiresIn: "1d" });
-  response.json({ token });
+  const token = jwt.sign(payload, CUSTOM_TOKEN_KEY, { expiresIn: AuthorizationTokenExpireTime });
+
+  response
+    .cookie(AuthorizationCookieName, token, { httpOnly: true, domain: "localhost" })
+    .json({ token });
 });
 
-app.all("/authorized", (request, response) => {
-  const { success, ...rest } = checkAuthorization(request.headers[CUSTOM_TOKEN_HEADER]);
-  response.status(success ? 200 : 401).json({ success, ...rest });
+app.all("/authorized", [needsToBeAuthenticated, needsToBeVerified], (request, response) => {
+  response.json({ user: request.user });
+});
+
+app.all("/vip", [needsToBeAuthenticated, needsToBeVIP], (request, response) => {
+  response.json({ user: request.user });
 });
 
 app.listen(port, () => {
