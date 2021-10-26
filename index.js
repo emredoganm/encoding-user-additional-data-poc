@@ -4,6 +4,7 @@ const express = require("express");
 const morgan = require("morgan");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
+const helmet = require("helmet");
 
 const { generateUser, generateCustomData } = require("./utils");
 const { needsToBeAuthenticated, needsToBeVerified, needsToBeVIP } = require("./middlewares");
@@ -21,6 +22,7 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("combined"));
+app.use(helmet());
 
 app.get("/", (_request, response) => {
   response.json({ message: "Hello World!" });
