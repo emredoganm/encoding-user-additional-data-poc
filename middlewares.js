@@ -5,7 +5,11 @@ const { AUTHORIZATION_TOKEN_HEADER, CUSTOM_TOKEN_HEADER } = process.env;
 const needsToBeAuthenticated = (request, response, next) => {
   const token =
     request.headers[AUTHORIZATION_TOKEN_HEADER] || request.cookies[AuthenticationCookieName];
-  const { success, payload } = checkAuthentication(token);
+  const { success, payload, error } = checkAuthentication(token);
+
+  if (error) {
+    return response.status(401).json({ success: false, error });
+  }
 
   if (success) {
     const { iat, exp, ...rest } = payload;
@@ -20,7 +24,11 @@ const needsToBeAuthorized =
   (statusKey = null, message = "Unauthorized!") =>
   (request, response, next) => {
     const token = request.headers[CUSTOM_TOKEN_HEADER] || request.cookies[AuthorizationCookieName];
-    const { success, payload } = checkAuthorization(token);
+    const { success, payload, error } = checkAuthorization(token);
+
+    if (error) {
+      return response.status(401).json({ success: false, error });
+    }
 
     if (payload[statusKey] && success) {
       const { iat, exp, ...rest } = payload;
