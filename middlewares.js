@@ -3,8 +3,7 @@ const { AuthenticationCookieName, AuthorizationCookieName } = require("./constan
 const { AUTHORIZATION_TOKEN_HEADER, CUSTOM_TOKEN_HEADER } = process.env;
 
 const needsToBeAuthenticated = (request, response, next) => {
-  const token =
-    request.headers[AUTHORIZATION_TOKEN_HEADER] || request.cookies[AuthenticationCookieName];
+  const token = request.headers[AUTHORIZATION_TOKEN_HEADER] || request.cookies[AuthenticationCookieName];
   const { success, payload, error } = checkAuthentication(token);
 
   if (error) {
