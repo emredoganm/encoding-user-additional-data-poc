@@ -29,4 +29,20 @@ router.get("/investments", (_request, response) => {
   response.json(require("../responses/investments.json"));
 });
 
+router.get("/allocations/:id", (request, response) => {
+  response.json({ data: null, id: request.params.id });
+});
+
+router.get("/users/accountSettings", (_request, response) => {
+  response.json(require("../responses/accountSettings.json"));
+});
+
+router.all("/ping", (_request, response) => {
+  response.send(true);
+});
+
+router.all("/legal-entities", (_request, response) => {
+  response.json({ data: [] });
+});
+
 module.exports = router;
